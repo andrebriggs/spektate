@@ -9,7 +9,7 @@ variables:
   azureSubscription: Contoso
 
 jobs:
-  - job: Spektate build
+  - job: Spektate_Build
     steps:
       - task: NodeTool@0
         inputs:
@@ -31,7 +31,7 @@ jobs:
         workingDirectory: "./"
         displayName: "Build"
 
-  - job: Docker publish
+  - job: Docker_Publish
     steps:
       - task: Docker@2
         inputs:
@@ -42,9 +42,9 @@ jobs:
           tags: "spektate-$(Build.SourceBranchName)-$(Build.BuildId)"
         condition: ne(variables['Build.Reason'], 'PullRequest')
         displayName: Build docker image
-    dependsOn: Spektate build
+    dependsOn: Spektate_Build
 
-  - job: Package build and test
+  - job: Package_Build_Test
     steps:
       - script: |
           set -e
@@ -55,7 +55,7 @@ jobs:
           yarn test
         displayName: "package build, lint and test"
 
-  - job: Spektate publish
+  - job: Spektate_Publish
     steps:
       - task: AzureWebAppContainer@1
         inputs:
@@ -64,7 +64,7 @@ jobs:
           imageName: $(imageName)
           displayName: Deploy Spektate to Web App
         # condition: ne(variables['Build.Reason'], 'PullRequest')
-    dependsOn: Docker publish
+    dependsOn: Docker_Publish
 
   - job: Publish Coverage
     steps:
@@ -74,5 +74,5 @@ jobs:
           summaryFileLocation: "$(System.DefaultWorkingDirectory)/**/*coverage.xml"
           reportDirectory: "$(System.DefaultWorkingDirectory)/**/coverage"
     dependsOn:
-      - Spektate build
-      - Package build and test
+      - Spektate_Build
+      - Package_Build_Test
