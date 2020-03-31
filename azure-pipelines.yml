@@ -8,57 +8,71 @@ variables:
   imageName: spektateacr.azurecr.io/spektate-$(Build.SourceBranchName)-$(Build.BuildId)
   azureSubscription: Contoso
 
-steps:
-  - task: NodeTool@0
-    inputs:
-      versionSpec: "10.x"
-    displayName: "Install Node.js"
+jobs:
+  - job: Spektate build
+    steps:
+      - task: NodeTool@0
+        inputs:
+          versionSpec: "10.x"
+        displayName: "Install Node.js"
 
-  - script: |
-      yarn install
-    workingDirectory: "./"
-    displayName: "yarn"
+      - script: |
+          yarn install
+        workingDirectory: "./"
+        displayName: "yarn"
 
-  - script: |
-      yarn lint
-    workingDirectory: "./"
-    displayName: "tslint"
+      - script: |
+          yarn lint
+        workingDirectory: "./"
+        displayName: "tslint"
 
-  - script: |
-      yarn build
-    workingDirectory: "./"
-    displayName: "Build"
+      - script: |
+          yarn build
+        workingDirectory: "./"
+        displayName: "Build"
 
-  - task: Docker@2
-    inputs:
-      containerRegistry: "spektateacrconnection"
-      repository: "spektate"
-      command: "buildAndPush"
-      Dockerfile: "**/Dockerfile"
-      tags: "spektate-$(Build.SourceBranchName)-$(Build.BuildId)"
-    condition: ne(variables['Build.Reason'], 'PullRequest')
-    displayName: Build docker image
+  - job: Docker publish
+    steps:
+      - task: Docker@2
+        inputs:
+          containerRegistry: "spektateacrconnection"
+          repository: "spektate"
+          command: "buildAndPush"
+          Dockerfile: "**/Dockerfile"
+          tags: "spektate-$(Build.SourceBranchName)-$(Build.BuildId)"
+        condition: ne(variables['Build.Reason'], 'PullRequest')
+        displayName: Build docker image
+    dependsOn: Spektate build
 
-  - script: |
-      set -e
-      cd packages/spektate
-      yarn
-      yarn build
-      yarn lint
-      yarn test
-    displayName: "package build, lint and test"
+  - job: Package build and test
+    steps:
+      - script: |
+          set -e
+          cd packages/spektate
+          yarn
+          yarn build
+          yarn lint
+          yarn test
+        displayName: "package build, lint and test"
 
-  - task: AzureWebAppContainer@1
-    inputs:
-      appName: "spk-ci" #$(WEB_APP_NAME)
-      azureSubscription: "spektatewebconnection" #$(azureSubscription)
-      imageName: $(imageName)
-    dependsOn: Build docker image
-    # condition: ne(variables['Build.Reason'], 'PullRequest')
-    displayName: Deploy Spektate to Web App
+  - job: Spektate publish
+    steps:
+      - task: AzureWebAppContainer@1
+        inputs:
+          appName: "spk-ci" #$(WEB_APP_NAME)
+          azureSubscription: "spektatewebconnection" #$(azureSubscription)
+          imageName: $(imageName)
+          displayName: Deploy Spektate to Web App
+        # condition: ne(variables['Build.Reason'], 'PullRequest')
+    dependsOn: Docker publish
 
-  - task: PublishCodeCoverageResults@1
-    inputs:
-      codeCoverageTool: Cobertura
-      summaryFileLocation: "$(System.DefaultWorkingDirectory)/**/*coverage.xml"
-      reportDirectory: "$(System.DefaultWorkingDirectory)/**/coverage"
+  - job: Spektate publish
+    steps:
+      - task: PublishCodeCoverageResults@1
+        inputs:
+          codeCoverageTool: Cobertura
+          summaryFileLocation: "$(System.DefaultWorkingDirectory)/**/*coverage.xml"
+          reportDirectory: "$(System.DefaultWorkingDirectory)/**/coverage"
+    dependsOn:
+      - Spektate build
+      - Package build and test
