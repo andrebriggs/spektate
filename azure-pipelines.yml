@@ -5,6 +5,7 @@ pool:
   vmImage: "ubuntu-latest"
 
 variables:
+  # imageName: $(ACR_NAME).azurecr.io/$(ACR_REPO_NAME)-$(Build.SourceBranchName)-$(Build.BuildId)
   imageName: spektateacr.azurecr.io/spektate-$(Build.SourceBranchName)-$(Build.BuildId)
   azureSubscription: Contoso
 
@@ -31,14 +32,14 @@ jobs:
         workingDirectory: "./"
         displayName: "Build"
 
-      - script: |
-          set -e
-          cd packages/spektate
-          yarn
-          yarn build
-          yarn lint
-          yarn test
-        displayName: "package build, lint and test"
+      # - script: |
+      #     set -e
+      #     cd packages/spektate
+      #     yarn
+      #     yarn build
+      #     yarn lint
+      #     yarn test
+      #   displayName: "package build, lint and test"
 
       - task: PublishCodeCoverageResults@1
         inputs:
@@ -59,8 +60,16 @@ jobs:
         displayName: Build docker image
     dependsOn: Spektate_Build
 
-  # - job: Package_Build_Test
-  #   steps:
+  - job: Package_Build_Test
+    steps:
+      - script: |
+          set -e
+          cd packages/spektate
+          yarn
+          yarn build
+          yarn lint
+          yarn test
+    displayName: "package build, lint and test"
 
   - job: Spektate_Publish
     steps:
