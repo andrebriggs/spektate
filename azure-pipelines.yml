@@ -31,6 +31,21 @@ jobs:
         workingDirectory: "./"
         displayName: "Build"
 
+      - script: |
+          set -e
+          cd packages/spektate
+          yarn
+          yarn build
+          yarn lint
+          yarn test
+        displayName: "package build, lint and test"
+
+      - task: PublishCodeCoverageResults@1
+        inputs:
+          codeCoverageTool: Cobertura
+          summaryFileLocation: "$(System.DefaultWorkingDirectory)/**/*coverage.xml"
+          reportDirectory: "$(System.DefaultWorkingDirectory)/**/coverage"
+
   - job: Docker_Publish
     steps:
       - task: Docker@2
@@ -44,16 +59,8 @@ jobs:
         displayName: Build docker image
     dependsOn: Spektate_Build
 
-  - job: Package_Build_Test
-    steps:
-      - script: |
-          set -e
-          cd packages/spektate
-          yarn
-          yarn build
-          yarn lint
-          yarn test
-        displayName: "package build, lint and test"
+  # - job: Package_Build_Test
+  #   steps:
 
   - job: Spektate_Publish
     steps:
@@ -65,14 +72,13 @@ jobs:
           displayName: Deploy Spektate to Web App
         # condition: ne(variables['Build.Reason'], 'PullRequest')
     dependsOn: Docker_Publish
-
-  - job: Publish_Coverage
-    steps:
-      - task: PublishCodeCoverageResults@1
-        inputs:
-          codeCoverageTool: Cobertura
-          summaryFileLocation: "$(System.DefaultWorkingDirectory)/**/*coverage.xml"
-          reportDirectory: "$(System.DefaultWorkingDirectory)/**/coverage"
-    dependsOn:
-      - Spektate_Build
-      - Package_Build_Test
+  # - job: Publish_Coverage
+  #   steps:
+  #     - task: PublishCodeCoverageResults@1
+  #       inputs:
+  #         codeCoverageTool: Cobertura
+  #         summaryFileLocation: "$(System.DefaultWorkingDirectory)/**/*coverage.xml"
+  #         reportDirectory: "$(System.DefaultWorkingDirectory)/**/coverage"
+  #   dependsOn:
+  #     - Spektate_Build
+  #     - Package_Build_Test
