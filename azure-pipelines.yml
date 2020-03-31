@@ -51,7 +51,7 @@ steps:
   - task: AzureWebAppContainer@1
     inputs:
       appName: "spk-ci" #$(WEB_APP_NAME)
-      azureSubscription: "spektateacrconnection" #$(azureSubscription)
+      azureSubscription: "spektatewebconnection" #$(azureSubscription)
       imageName: $(imageName)
     dependsOn: Build docker image
     # condition: ne(variables['Build.Reason'], 'PullRequest')
