@@ -65,6 +65,7 @@ jobs:
       - script: |
           set -e
           cd packages/spektate
+          echo "Current directory: $(pwd)"
           yarn
           yarn build
           yarn lint
