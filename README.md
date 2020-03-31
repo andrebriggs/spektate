@@ -17,7 +17,7 @@ Note: Spektate dashboard will delete deployments when their corresponding builds
 
 ## Onboard a Bedrock project to use Spektate
 
-Follow the steps in this [guide](https://github.com/CatalystCode/spk/blob/master/docs/service-introspection-onboarding.md) to onboard a project to use Spektate.
+Follow the steps in this [guide](https://github.com/CatalystCode/spk/blob/master/guides/service-introspection-onboarding.md) to onboard a project to use Spektate.
 
 ## Install on your cluster
 
@@ -79,6 +79,10 @@ If you're not using an external IP, use port-forwarding to access the dashboard:
    - **Note**: If you're using GitHub, add `REACT_APP_GITHUB_MANIFEST_USERNAME`: Account name or organization name under which the manifest repository resides.
 
 3. Then run `yarn start-backend` in one window to start the backend server, and `yarn start` in another to start the front end to view the dashboard for the hello world deployment screen!
+
+## Azure Web App Hosting
+
+You can provide an Azure Active Directory layer of authetication on top of Spektate. Follow instructions [here](./WebAppHosting.md).
 
 ## Command Line Interface
 
