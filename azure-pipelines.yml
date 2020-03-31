@@ -4,6 +4,10 @@ trigger:
 pool:
   vmImage: "ubuntu-latest"
 
+variables:
+  imageName: spektateacr.azurecr.io/spektate-$(Build.SourceBranchName)-$(Build.BuildId)
+  azureSubscription: Contoso
+
 steps:
   - task: NodeTool@0
     inputs:
@@ -43,6 +47,14 @@ steps:
       yarn lint
       yarn test
     displayName: "package build, lint and test"
+
+  - task: AzureWebAppContainer@1
+    inputs:
+      appName: "spk-ci" #$(WEB_APP_NAME)
+      azureSubscription: "spektateacrconnection" #$(azureSubscription)
+      imageName: $(imageName)
+    condition: ne(variables['Build.Reason'], 'PullRequest')
+    displayName: Deploy Spektate to Web App
 
   - task: PublishCodeCoverageResults@1
     inputs:
