@@ -70,6 +70,7 @@ jobs:
           yarn -v
           yarn
           yarn build
+          yarn add tslint-config-prettier
           yarn lint
           yarn test
     displayName: "package build, lint and test"
