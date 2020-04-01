@@ -1,0 +1,63 @@
+trigger:
+  - master
+
+pool:
+  vmImage: "ubuntu-latest"
+
+variables:
+  imageName: spektateacr.azurecr.io/spektate-$(Build.SourceBranchName)-$(Build.BuildId)
+  azureSubscription: Contoso
+
+steps:
+  - task: NodeTool@0
+    inputs:
+      versionSpec: "10.x"
+    displayName: "Install Node.js"
+
+  - script: |
+      yarn install
+    workingDirectory: "./"
+    displayName: "yarn"
+
+  - script: |
+      yarn lint
+    workingDirectory: "./"
+    displayName: "tslint"
+
+  - script: |
+      yarn build
+    workingDirectory: "./"
+    displayName: "Build"
+
+  - task: Docker@2
+    inputs:
+      containerRegistry: "spektateacrconnection"
+      repository: "spektate"
+      command: "buildAndPush"
+      Dockerfile: "**/Dockerfile"
+      tags: "spektate-$(Build.SourceBranchName)-$(Build.BuildId)"
+    condition: ne(variables['Build.Reason'], 'PullRequest')
+    displayName: Build docker image
+
+  - script: |
+      set -e
+      cd packages/spektate
+      yarn
+      yarn build
+      yarn lint
+      yarn test
+    displayName: "package build, lint and test"
+
+  - task: AzureWebAppContainer@1
+    inputs:
+      appName: "spk-ci" #$(WEB_APP_NAME)
+      azureSubscription: "spektateacrconnection" #$(azureSubscription)
+      imageName: $(imageName)
+    condition: ne(variables['Build.Reason'], 'PullRequest')
+    displayName: Deploy Spektate to Web App
+
+  - task: PublishCodeCoverageResults@1
+    inputs:
+      codeCoverageTool: Cobertura
+      summaryFileLocation: "$(System.DefaultWorkingDirectory)/**/*coverage.xml"
+      reportDirectory: "$(System.DefaultWorkingDirectory)/**/coverage"
